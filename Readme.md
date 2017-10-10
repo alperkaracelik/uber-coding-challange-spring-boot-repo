@@ -52,13 +52,13 @@ Google Maps API provides a huge set of abilities and a very good [documentation]
 
 ### Back-end
 
-Back-end is basically a Spring Boot application - a Java web application that resolves the maven dependencies automatically and uses an embedded Tomcat server. System overview is shown below.
+Back-end is basically a Spring Boot application - a Java web application that resolves the maven dependencies automatically and uses an embedded Tomcat server. System overview is shown below:
 
 ![Web Service Overview](https://raw.githubusercontent.com/alperkaracelik/uber-coding-challange-spring-boot-repo/master/src/main/resources/static/images/ServerSystemOverview.png)
 
 *Rest Controller* class is a *servlet* class that accepts GET requests and forwards the user inputs to the *Query Handler*. Query Handler class uses the *Geodesic Distance Calculator* for querying food trucks inside a specific circle. *Client* class calls the Data SF API, converts the received JSON string to a list of *Food Truck* objects and pushes the object to the *Accessor*. Accessor class can be interpreted as a database stub. It allows CRUD operations and maintains a map for storing all food trucks and another map for indexing the food trucks by their status. Accessor, Query Handler, Geodesic Calculator and Client classes are singleton, since we only need one instance of them in the virtual machine.
 
-[Spring Boot](https://projects.spring.io/spring-boot/) allows you to create standalone Spring applications and embed Tomcat without any code generation.It provides a strong framework and handles pretty much most of the dirty works (especially, embedding a web server is challenging configuration task). Like Google Maps API, I have no experience with Spring Boot.
+[Spring Boot](https://projects.spring.io/spring-boot/) allows you to create standalone Spring applications and embed Tomcat without any code generation.It provides a strong framework and handles pretty much most of the dirty works (especially, embedding a web server is a challenging configuration task). Like Google Maps API, I have no experience with Spring Boot.
 
 On the other hand, I have six years of experience in Java and frequently used maps (especially *HashMap*) and singleton pattern in a lot of projects before. For indexing and storing a data where each item has one or more key values, hash maps provide a fast and effective solution. Indexing on status field also accelerates the query results. For each state, we maintain a list of food trucks, and these lists are constructed and populated only during initialization phase. Therefore, when a query on status is received, we do not traverse through the all of the food trucks. The complexity is still *O(n)* since we are converting a list of objects to a JSON string, but in practice, it saves a lot of time.
 

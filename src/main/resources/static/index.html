@@ -115,6 +115,8 @@ html, body {
 			document.getElementById("longitude").value = san_fransisco.lng;
 			
 			updateSelectedMarkerPosition(san_fransisco.lat, san_fransisco.lng);
+			
+			map.setCenter(san_fransisco);
 		}
 
 		// Sets the latitude and longitude input fields 

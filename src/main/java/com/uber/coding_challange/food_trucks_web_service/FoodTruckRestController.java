@@ -2,6 +2,7 @@ package com.uber.coding_challange.food_trucks_web_service;
 
 import java.util.List;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,6 +30,7 @@ public class FoodTruckRestController
      *
      * @return Food Trucks in JSON format
      */
+	@CrossOrigin(origins = "https://foodtruckradar.herokuapp.com/")
     @RequestMapping(
             method = RequestMethod.GET,
             produces = "application/json")
@@ -43,6 +45,7 @@ public class FoodTruckRestController
      *
      * @return Food Trucks in JSON format
      */
+	@CrossOrigin(origins = "https://foodtruckradar.herokuapp.com/")
     @RequestMapping(
     		value = "/query",
             method = RequestMethod.GET,
