@@ -1,5 +1,6 @@
 package com.uber.coding_challange.food_trucks_web_service.ctrl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.uber.coding_challange.food_trucks_web_service.dataaccess.FoodTruckAccessor;
@@ -70,8 +71,7 @@ public class FoodTruckQueryHandler
         		
         		// Update the query results 
         		queryResult = 
-        				FoodTruckAccessor.getInstance().getFoodTrucksInsideCircle(
-        						queryResult, latitude, longitude, radius, radiusUnit);
+        				getFoodTrucksInsideCircle(queryResult, latitude, longitude, radius, radiusUnit);
 			} 
     		catch (Exception e) 
     		{
@@ -82,4 +82,51 @@ public class FoodTruckQueryHandler
     	// Return the query result
     	return queryResult;
     }
+	
+	/**
+	 * Returns the food trucks that reside in the specified circle.
+	 * Center of the circle: ['latitude', 'longitude'], 
+	 * Radius of the circle: 'radius', Unit of the radius: 'radiusUnit'
+	 * This method is synchronized on this class (Manipulation on storage elements is prevented.)
+	 * 
+	 * @param foodTrucks List that contains trucks that will be checked
+	 * @param latitude Latitude of the center of the circle
+	 * @param longitude Longitude of the center of the circle
+	 * @param radius Radius of the circle
+	 * @param radiusUnit Unit of the radius
+	 * @return The food trucks that reside in the specified circle.
+	 */
+	public List<FoodTruck>getFoodTrucksInsideCircle(
+			List<FoodTruck> foodTrucks, 
+			double latitude, 
+			double longitude, 
+			double radius,
+			DistanceUnitEnum radiusUnit)
+	{
+		synchronized (FoodTruckAccessor.class) 
+		{
+			// Initialize the result list
+			List<FoodTruck> foodTrucksInsideCircle = new ArrayList<FoodTruck>();
+			
+			// Traverse through the food trucks
+			for (FoodTruck foodTruck:foodTrucks)
+			{
+				// Calculate the distance between current food truck and the center of the circle
+				double distance = 
+						GeodesicDistanceCalculator.getInstance().distance(
+								foodTruck.getLatitude(), foodTruck.getLongitude(),
+								latitude, longitude, radiusUnit);
+				
+				// If distance is smaller than the radius,
+				if (distance < radius)
+				{
+					// Then it is in the circle, add it to the result list.
+					foodTrucksInsideCircle.add(foodTruck);
+				}
+			}
+			
+			// Return the resulting list.
+			return foodTrucksInsideCircle;
+		}
+	}
 }
