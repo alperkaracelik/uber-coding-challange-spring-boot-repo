@@ -1,0 +1,7 @@
+.mvn*
+.settings*
+gradle*
+target*
+.classpath
+.project
+.springBeans

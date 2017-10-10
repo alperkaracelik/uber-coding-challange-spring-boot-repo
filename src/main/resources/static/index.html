@@ -1,0 +1,336 @@
+<html>
+<head>
+<title>Food Trucks</title>
+<meta name="viewport" content="initial-scale=1.0">
+<meta charset="utf-8">
+<style>
+/* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+#map {
+	height: 100%;
+}
+/* Optional: Makes the sample page fill the window. */
+html, body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+#input-panel {
+	position: absolute;
+	top: 15%;
+	left: 10px;
+	z-index: 10;
+	background-color: rgba(240, 240, 240, 0.75);
+	padding: 10px;
+	border: 1px solid #999;
+	text-align: left;
+	font-family: 'Roboto', 'sans-serif';
+	line-height: 25px;
+	padding-left: 10px;
+}
+</style>
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+</head>
+<body>
+	<div id="input-panel">
+		Lat: <input id="latitude" style="height: 20px; width: 113px;" type=text value=""> 
+		Long: <input id="longitude" style="height: 20px; width: 113px;" type=text value="">
+		<input title="Set Location to center of San Fransisco" onclick="fillLatLongToCenterSF();" style="background-color: #ccc; font-family: 'Roboto', 'sans-serif';" type=button value="to SF">
+		<br/>
+		Distance: <input id="radius" style="height: 20px; width: 87px;" type=text value=""></input>
+		<select id="radius_unit">
+			<option value="km">km</option>
+			<option value="nmi">nmi</option>
+			<option value="mi">mi</option>
+		</select>
+		<hr>
+		Status:  <select id="status">
+			<option value="all">ALL</option>
+  			<option value="requested">Requested</option>
+  			<option value="approved">Approved</option>
+  			<option value="inactive">Inactive</option>
+  			<option value="suspend">Suspend</option>
+  			<option value="expired">Expired</option>
+  			<option value="onhold">Onhold</option>
+  		</select>
+  		<hr>
+		<input onclick="getFoodTrucks();" style="background-color: #ccc; font-family: 'Roboto', 'sans-serif';" type=button value="Show Food Trucks">
+	</div>
+
+	<div id="map"></div>
+	<script>
+		
+		// Stores the query status. Fields are populated after user submits the query.
+		var query_status = 
+		{
+			valid: false,
+			status: ""
+		}
+	
+		// API URI TODO: Should be changed after publishing
+		var api = "http://localhost:8080/food-trucks/query?";
+		
+		// Map objects/references
+		var map;
+		var markers = [];
+		var selectedPositionMarker;
+		var shownInfowindow;
+		
+		// Default selected position is San Fransisco
+		var selected_position = 
+		{
+			lat : 37.773972,
+			lng : -122.431297
+		};
+
+		// Geographic position of San Fransisco
+		var san_fransisco = 
+		{
+			lat : 37.773972,
+			lng : -122.431297
+		};
+
+		
+		// Initialization of Google Map
+		function initMap() 
+		{
+			// Initialization of the map object.
+			map = new google.maps.Map(document.getElementById('map'), {
+				center : selected_position,
+				zoom : 12
+			});
+
+			// Listens selected position on the map
+			google.maps.event.addListener(map, 'click', function(event) {
+				   fillLatLong(event.latLng);
+			});
+		}
+
+		// Sets the latitude and longitude input fields 
+		// according to the geographic position of San Fransisco
+		function fillLatLongToCenterSF() 
+		{
+			document.getElementById("latitude").value = san_fransisco.lat;
+			document.getElementById("longitude").value = san_fransisco.lng;
+			
+			updateSelectedMarkerPosition(san_fransisco.lat, san_fransisco.lng);
+		}
+
+		// Sets the latitude and longitude input fields 
+		// according to the selected geographic position
+		function fillLatLong(location) 
+		{
+			document.getElementById("latitude").value = location.lat();
+			document.getElementById("longitude").value = location.lng();
+			
+			updateSelectedMarkerPosition(location.lat(), location.lng());
+		}
+		
+		// Sets the marker position to the selected position
+		function updateSelectedMarkerPosition(lat, lng)
+		{
+			// Check if there is already a selected position marker
+			if(selectedPositionMarker)
+			{
+				// Then just update the position
+				selectedPositionMarker.setPosition(new google.maps.LatLng(lat, lng));
+			}
+			else
+			{
+				// Then, create the marker
+				selectedPositionMarker = new google.maps.Marker({
+					position : {
+						lat : lat,
+						lng : lng
+					},
+					map : map,
+					icon: getPinImage("FE7569"),
+				});
+			}
+		}
+		
+		// Creates and returns the pin image using Google Map API
+		function getPinImage(pinColor)
+		{
+			return new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
+    				new google.maps.Size(21, 34),
+    				new google.maps.Point(0,0),
+    				new google.maps.Point(10, 34));
+		}
+		
+		// Constructs the query string
+		// Runs the query and obtains the result in JSON format.
+		function getFoodTrucks() 
+		{
+			var status = document.getElementById("status");
+			var url = api;
+			var locationQuery = getLocationQueryAndValidate(); // Query of latitude, longitude and distance
+			
+			// Append the status query
+			url += "status=" + status.value;
+			
+			// Check: 1) query is valid and 2) query is not empty
+			if (query_status.valid && !emptyString(locationQuery))
+			{
+				// Append the location query
+				url += ("&" + locationQuery);
+			}
+			else if (! query_status.valid)
+			{
+				// Invalid query! Warn the user
+				window.alert("INVALID QUERY!: " + query_status.status);
+			}
+			
+			if (query_status.valid)
+			{
+				// Run the query and obtains the result in JSON format.
+				// Propagate the JSON object to 'getFoodTrucksJSON()' function
+				$.getJSON(url, getFoodTrucksJSON);
+			}
+		}
+
+		// Traverses through JSON objects and construct the map markers.
+		function getFoodTrucksJSON(data) 
+		{
+			// Clear the markers from previous query
+			clearMarkers();
+
+			// Traverse in the received food truck list:
+			for (var i = 0; i < data.length; i++) 
+			{
+				// Info window
+				var infowindow = new google.maps.InfoWindow();
+				// Content that will be shown on the info window
+				var content = getInfoWindowContentString(data[i]);
+    			
+				// Create the marker
+				var marker = new google.maps.Marker({
+					position : {
+						lat : data[i].latitude,
+						lng : data[i].longitude
+					},
+					map : map,
+					icon: getPinImage("75FE69"),
+				});
+				
+				// Add the 'onclick' event listener to the marker.
+				// When user click on a marker, the related info window is shown 
+				// and the previously shown window is closed.
+				google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+			        return function() {
+		        		if (shownInfowindow)
+		        	   	{
+		        			shownInfowindow.close();
+		        	   	}
+		        		infowindow.setContent(content);
+		        		infowindow.open(map,marker);
+		        		shownInfowindow = infowindow;
+			        };
+			    })(marker,content,infowindow));
+
+				// Add the current marker to the marker array.
+				markers.push(marker);
+			}
+		}
+
+		// Removes the markers from the map.
+		function clearMarkers() 
+		{
+			for (var i = 0; i < markers.length; i++) 
+			{
+				markers[i].setMap(null);
+			}
+			markers = [];
+		}
+		
+		// Returns true if the input string is empty or undefined
+		function emptyString(str) {
+		    return (!str || 0 === str.length);
+		}
+		
+		// Validates the location query by cheking latitude, longitude and distance input fields.
+		// Also constructs and returns the query string
+		function getLocationQueryAndValidate()
+		{
+			var queryStr="";
+			query_status.valid = true; // Set the query status to true
+			
+			// Obtain the input values
+			var latitude = document.getElementById("latitude").value;
+			var longitude = document.getElementById("longitude").value;
+			var radius = document.getElementById("radius").value;
+			var radius_unit = document.getElementById("radius_unit").value;
+			
+			// If all inputs are empty
+			if (emptyString(latitude) && emptyString(longitude) && emptyString(radius))
+			{
+				// It is valid but query string is empty.
+				query_status.valid = true;
+			}
+			else
+			{
+				// Validate latitude, longitude and radius
+				validateNumberInput(latitude, "Latitude");
+				validateNumberInput(longitude, "Longitude");
+				validateNumberInput(radius, "Radius");
+				
+				// If all of the number inputs are valid,
+				if (query_status.valid)
+				{
+					queryStr += "latitude=" + latitude + 
+					   			"&longitude=" + longitude + 
+					   			"&radius=" + radius + 
+					   			"&radius_unit=" + radius_unit;
+				}
+			}
+			
+			return queryStr;
+		}
+		
+		// Validates number input and populates the 'query_status'
+		function validateNumberInput(input, inputStr)
+		{
+			// Input field is empty
+			if (emptyString(input))
+			{
+				// Then field is missing
+				query_status.valid = false;
+				query_status.status = inputStr + " is missing!";
+			}
+			// Input is not empty but also not a valid number
+			else if (! emptyString(input) && isNaN(input))
+			{
+				// Then field is invalid
+				query_status.valid = false;
+				query_status.status = inputStr + " is invalid!";
+			}
+		}
+
+		// Returns the content of info window of the given food truck
+		function getInfoWindowContentString(foodTruck)
+		{
+			content = 
+				'<div id="content">'+
+	            '<div id="siteNotice">'+
+	            '</div>'+
+	            '<b>Applicant: </b>' + foodTruck.applicant + '<br/>'+
+	            '<b>Facility Type: </b>' + foodTruck.facilitytype + '<br/>' +
+	            '<b>Food Items: </b>' + foodTruck.fooditems + '<br/>'+
+	            '<b>Address: </b>' + foodTruck.address + '<br/>'+
+	            '<b>Location Description: </b>' + foodTruck.locationdescription + '<br/>'+
+	            '<b>Working Hours: </b>' + foodTruck.dayshours + '<br/>'+
+	            '<b>CNN: </b>' + foodTruck.cnn + '<br/>'+
+	            '<b>Permit: </b>' + foodTruck.permit + '<br/>'+
+	            '<b>Status: </b>' + foodTruck.status + '<br/>'+
+	            '<a href="' + foodTruck.schedule + '">Schedule</a>' +
+	            '</div>' +
+	            '</div>';
+			return content;
+		}
+	</script>
+	<script
+		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBbzz1dD207KDHk5zcA1Dcdh8iUa5gqWFQ&callback=initMap"
+		async defer></script>
+</body>
+</html>
