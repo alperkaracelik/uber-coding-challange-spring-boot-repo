@@ -1,6 +1,6 @@
 # Food Truck Radar
 
-Food Truck Radar project consists of a user interface and a web service, where users can query the food trucks in the San Francisco by their status or location. The results are shown with markers on Google Map.
+Food Truck Radar project consists of a user interface and a web service, where users can query the food trucks in the San Francisco by their status or location. The results are shown with markers on a Google Map.
 
 ## Getting Started
 
@@ -25,18 +25,18 @@ mvn clean compile
 mvn package
 ```
 
-You should see a *.jar* file in the target directory. This *.jar* file includes an embedded *Tomcat* (v8.5). Run this file with the following command:
+You should see a *.jar* file in the target directory. This *.jar* file includes an embedded *Tomcat*. Run this file with the following command:
 
 ```
 java -jar gs-rest-service-0.1.0.jar
 ```
 
 A Spring Boot application with an embedded Tomcat server should be started. You can try sending *GET* requests to check if the web server is up and running. I have used a *Chrome* extension name [Postman](https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop) during my tests.
-Sample API URIs are available below in the **API** section.
+Sample API URIs are available below in the [API](https://github.com/alperkaracelik/uber-coding-challange-spring-boot-repo#api) section.
 
 ## System Architecture
 
-Food Truck Radar is a *full-stack* project that consists of a *front-end* and a *back-end* component. Front-end is a simple *index.html* file that accepts the user inputs, calls the API provided by the back-end and shows the results on Google Maps by using the *Google Maps API*. Back-end is a Java web service that provides a RESTful API, accepts queries with REST URIs, connects to [DataSF](https://data.sfgov.org/Economy-and-Community/Mobile-Food-Facility-Permit/rqzj-sfat) by calling the DataSF API and indexes the received *JSON* objects.
+Food Truck Radar is a *full-stack* project that consists of a *front-end* and a *back-end* component. Front-end is a simple *index.html* file that accepts the user inputs, calls the API provided by the back-end and shows the results on Google Maps by using the *Google Maps API*. Back-end is a Java web service that provides a REST API, accepts queries with REST URIs, connects to [DataSF](https://data.sfgov.org/Economy-and-Community/Mobile-Food-Facility-Permit/rqzj-sfat) by calling the DataSF API and indexes the received *JSON* objects.
 
 ![System Overview](https://raw.githubusercontent.com/alperkaracelik/uber-coding-challange-spring-boot-repo/master/src/main/resources/static/images/SystemOverview.png)
 
@@ -92,8 +92,8 @@ https://foodtruckradar.herokuapp.com/food-trucks/query?status=REQUESTED&latitude
 
 Possible future works for the projects are:
 
-1) New queries can be added (for example a query on working hours)
-2) API for food truck data of other states or countries can be researched and if available, added to the web service.
+1) New queries can be allowed (for example a query on working hours).
+2) API for food truck data of other states or countries can be researched, and if available, added to the web service.
 
 ## Authors
 
