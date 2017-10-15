@@ -137,12 +137,9 @@ public class FoodTruckAccessor
 	{
 		synchronized (FoodTruckAccessor.class) 
 		{
-			if (foodTruckMap.containsKey(foodTruck.getObjectid()))
-			{
-				// Update the status map first.
-				updateStatusChange(foodTruck);
-				foodTruckMap.put(foodTruck.getObjectid(), foodTruck);
-			}
+			// Update the status map first.
+			updateStatusChange(foodTruck);
+			foodTruckMap.put(foodTruck.getObjectid(), foodTruck);
 		}
 	}
 	
